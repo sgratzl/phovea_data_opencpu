@@ -1,1 +1,9 @@
 version: '2.0'
+services:
+  _host:
+    depends_on:
+    - db_opencpu
+    links:
+    - db_opencpu:ocpu
+  db_opencpu:
+    image: opencpu/rstudio
