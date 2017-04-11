@@ -4,7 +4,7 @@
 # Licensed under the new BSD license, available at http://caleydo.org/license
 ###############################################################################
 
-from phovea_server.ns import Namespace, abort
+from phovea_server.ns import Namespace, abort, Response
 import requests
 import logging
 
@@ -15,11 +15,12 @@ _log = logging.getLogger(__name__)
 def _to_full_url(path):
   from phovea_server.config import view
   c = view('phovea_data_opencpu')
-  return 'http://{host}:{port}/{path}'.format(host=c.host, port=c.port, path=path)
+  return 'http://{host}:{port}/ocpu/{path}'.format(host=c.host, port=c.port, path=path)
 
 
-@app.route('/<path>')
+@app.route('/<path:path>')
 def _handle(path):
+  _log.info('proxy request url: %s', path)
   url = _to_full_url(path)
   if url:
     _log.info('proxy request url: %s', url)
