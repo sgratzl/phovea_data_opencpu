@@ -1,0 +1,27 @@
+{
+  "generator-phovea": {
+    "sextensions": [
+      {
+        "type": "namespace",
+        "id": "hello_world",
+        "module": "hello_world",
+        "extras": {
+          "namespace": "/api/hello_world"
+        }
+      }
+    ],
+    "type": "slib",
+    "modules": [
+      "phovea_server"
+    ],
+    "libraries": [],
+    "unknown": {
+      "requirements": [],
+      "dockerPackages": []
+    },
+    "name": "phovea_data_opencpu",
+    "author": "Samuel Gratzl",
+    "today": "Tue, 11 Apr 2017 14:03:18 GMT",
+    "githubAccount": "sgratzl"
+  }
+}
