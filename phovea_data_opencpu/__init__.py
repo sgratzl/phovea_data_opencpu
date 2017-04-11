@@ -11,9 +11,8 @@ def phovea(registry):
   :param registry:
   """
   # generator-phovea:begin
-  registry.append('namespace', 'hello_world', 'phovea_data_opencpu.hello_world', {
-   'namespace': '/api/hello_world'
-  })
+  registry.append('data-provider', 'opencpu', 'phovea_data_opencpu.data_provider')
+  registry.append('namespace', 'opencpu', 'phovea_data_opencpu.api', dict(namespace='/api/ocpu'))
   # generator-phovea:end
   pass
 
