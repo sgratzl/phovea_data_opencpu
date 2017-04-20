@@ -3,10 +3,10 @@
   "port": 8004,
   "sessions": [
     {
-      "name": "dd",
-      "initScript": "dd = mtcars",//"load(file='D:/Documents/test.RData')",
+      "name": "mtcars",
+      "script": "data(mtcars); cars = mtcars",//"load(file='D:/Documents/test.RData')",
       "meta": {
-        "dd": {
+        "cars": {
           "idtype": "cars"
         }
       }

@@ -145,8 +145,8 @@ class OpenCPUColumn(AColumn):
 
 
 class OpenCPUTable(ATable):
-  def __init__(self, entry, session, meta):
-    ATable.__init__(self, entry['name'], 'opencpu', 'table', entry.get('id', None))
+  def __init__(self, entry, session, meta, session_name):
+    ATable.__init__(self, entry['name'], 'opencpu/' + session_name, 'table', entry.get('id', None))
     self._session = session
     self._variable = entry['name']
     self.idtype = meta.get('idtype', 'Custom')
@@ -193,11 +193,12 @@ class OpenCPUTable(ATable):
 class OpenCPUSession(object):
   def __init__(self, desc):
     self._desc = desc
-    self._session = create_session(desc['initScript'])
+    self._session = create_session(desc['script'])
 
     entries = resolve_datasets(self._session)
     meta = desc.get('meta', dict())
-    self._entries = [OpenCPUTable(entry, self._session, meta.get(entry['name'], dict())) for entry in entries]
+    self._entries = [OpenCPUTable(entry, self._session, meta.get(entry['name'], dict()), desc['name']) for entry in
+                     entries]
 
   def __iter__(self):
     return iter(self._entries)
