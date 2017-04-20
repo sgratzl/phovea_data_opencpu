@@ -1,4 +1,21 @@
 {
+  "name": "phovea_data_opencpu",
+  "description": "",
+  "homepage": "https://phovea.caleydo.org",
+  "version": "1.0.0-SNAPSHOT",
+  "author": {
+    "name": "Samuel Gratzl",
+    "email": "samuel_gratzl@gmx.at",
+    "url": ""
+  },
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/sgratzl/phovea_data_opencpu/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sgratzl/phovea_data_opencpu.git"
+  },
   "files": [
     "phovea_data_opencpu",
     "__init__.py",
@@ -17,22 +34,5 @@
     "build": "python build.py",
     "predist": "npm run build && npm run docs",
     "dist": "python setup.py bdist_egg && cd build && tar cvzf ../dist/phovea_data_opencpu.tar.gz *"
-  },
-  "name": "phovea_data_opencpu",
-  "description": "",
-  "homepage": "https://phovea.caleydo.org",
-  "version": "1.0.0-SNAPSHOT",
-  "author": {
-    "name": "Samuel Gratzl",
-    "email": "samuel_gratzl@gmx.at",
-    "url": ""
-  },
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/sgratzl/phovea_data_opencpu/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sgratzl/phovea_data_opencpu.git"
   }
 }
