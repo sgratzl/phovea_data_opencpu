@@ -1,4 +1,4 @@
-from phovea_server.dataset_def import ATable, ADataSetProvider, AColumn, AVector
+from phovea_server.dataset_def import ATable, ADataSetProvider, AColumn, AVector, AMatrix
 from logging import getLogger
 import requests
 import phovea_server
@@ -30,7 +30,7 @@ def create_session(init_script):
 phoveaDatasets = (function(objs) {
   known_type = function(col) {
     clazz <- class(col)     
-    if (clazz == 'numeric' || clazz == 'integer') {
+    if (clazz == 'numeric' || clazz == 'integer' || clazz == 'double' || clazz == 'matrix') {
       if (typeof(col) == 'integer') {
         list(type='int', range=c(min(col),max(col)))
       } else {
@@ -59,6 +59,12 @@ phoveaDatasets = (function(objs) {
          type='vector',
          value=known_type(dataset))
   }
+  matrixDescription = function(dataset, data_name) {    
+    list(name=data_name,
+         size=dim(dataset),
+         type='matrix',
+         value=known_type(dataset))
+  }
   r = list()
   for (obj in objs) {
     value = get(obj)
@@ -66,6 +72,8 @@ phoveaDatasets = (function(objs) {
       r[[obj]] = tableDescription(value, obj)
     } else if (is.vector(value)) {
       r[[obj]] = vectorDescription(value, obj)
+    } else if (is.matrix(value)) {
+      r[[obj]] = matrixDescription(value, obj)
     }
   }
   r
@@ -114,16 +122,23 @@ def resolve_datasets(session):
   return [to_desc(d) for d in desc.values()]
 
 
-def row_names(session, variable, expected_length):
+def _dim_names(session, variable, expected_length, dim):
   import numpy as np
-  output = requests.post(_to_url('library/base/R/rownames/json'),
+  output = requests.post(_to_url('library/base/R/{dim}names/json'.format(dim=dim)),
                          dict(x='{s}::{v}'.format(s=session, v=variable)))
   data = list(output.json())
+  dim_name = dim.capitalize()
   if len(data) < expected_length:
     # generate dummy ids
     for i in range(len(data), expected_length):
-      data.append('Row' + str(i))
+      data.append(dim_name + str(i))
   return np.array(data)
+
+def row_names(session, variable, expected_length):
+  return _dim_names(session, variable, expected_length, 'row')
+
+def col_names(session, variable, expected_length):
+  return _dim_names(session, variable, expected_length, 'col')
 
 
 def column_values(session, variable, column):
@@ -147,6 +162,9 @@ def vector_values(session, variable):
   output = requests.get(_to_url('tmp/{s}/R/{v}/json'.format(s=session, v=variable)))
   data = list(output.json())
   return np.array(data)
+
+def matrix_values(session, variable):
+  return vector_values(session, variable)
 
 
 class OpenCPUColumn(AColumn):
@@ -257,6 +275,67 @@ class OpenCPUVector(AVector):
     return self._values[range[0].asslice()]
 
 
+class OpenCPUMatrix(AMatrix):
+  def __init__(self, entry, session, meta, session_name):
+    super(OpenCPUMatrix, self).__init__(entry['name'], 'opencpu/' + session_name, 'matrix', entry.get('id', None))
+    self._session = session
+    self._variable = entry['name']
+    self.rowtype = meta.get('rowtype', 'Custom')
+    self.coltype = meta.get('coltype', 'Custom')
+    self._entry = entry
+    self.value = entry['value']['type']
+    self.shape = entry['size']
+
+    self._rows = None
+    self._row_ids = None
+    self._cols = None
+    self._col_ids = None
+    self._values = None
+
+  def to_description(self):
+    r = super(OpenCPUMatrix, self).to_description()
+    r['rowtype'] = self.rowtype
+    r['coltype'] = self.coltype
+    r['value'] = self._entry['value']
+    r['size'] = self.shape
+    return r
+
+  def rows(self, range=None):
+    if self._rows is None:
+      self._rows = row_names(self._session, self._variable, self.shape[0])
+    if range is None:
+      return self._rows
+    return self._rows[range.asslice()]
+
+  def rowids(self, range=None):
+    if self._row_ids is None:
+      self._row_ids = assign_ids(self.rows(), self.rowtype)
+    if range is None:
+      return self._row_ids
+    return self._row_ids[range.asslice()]
+
+  def cols(self, range=None):
+    if self._cols is None:
+      self._cols = col_names(self._session, self._variable, self.shape[0])
+    if range is None:
+      return self._cols
+    return self._cols[range.asslice()]
+
+  def colids(self, range=None):
+    if self._row_ids is None:
+      self._row_ids = assign_ids(self.rows(), self.coltype)
+    if range is None:
+      return self._row_ids
+    return self._row_ids[range.asslice()]
+
+  def asnumpy(self, range=None):
+    if self._values is None:
+      self._values = matrix_values(self._session, self._variable)
+    if range is None:
+      return self._values
+    return self._values[range[0].asslice()]
+
+
 class OpenCPUSession(object):
   def __init__(self, desc):
     self._desc = desc
@@ -270,8 +349,10 @@ class OpenCPUSession(object):
       meta_data = meta.get(entry['name'], dict())
       if entry['type'] == 'table':
         return OpenCPUTable(entry, self._session, meta_data, session_name)
-      if entry['type'] == 'vector':
+      elif entry['type'] == 'vector':
         return OpenCPUVector(entry, self._session, meta_data, session_name)
+      elif entry['type'] == 'matrix':
+        return OpenCPUMatrix(entry, self._session, meta_data, session_name)
       return None
 
     self._entries = [v for v in (to_dataset(entry) for entry in entries) if v is not None]
