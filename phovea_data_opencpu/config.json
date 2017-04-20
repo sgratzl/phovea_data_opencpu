@@ -1,7 +1,23 @@
 {
   "host": "ocpu",
   "port": 8004,
+  "discover": {
+    "function": "/library/base/R/list.files",
+    "arguments": {
+      "path": "'/datasets'",
+      "pattern": "'.R(Data|da)?$'",
+      "full.names": "TRUE"
+    }
+  },
   "sessions": [
-
+    {
+      "name": "survey",
+      "script": "library(MASS); survey = survey",
+      "meta": {
+        "survey": {
+          "idtype": "Student"
+        }
+      }
+    }
   ]
 }

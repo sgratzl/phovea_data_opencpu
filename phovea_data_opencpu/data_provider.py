@@ -170,6 +170,19 @@ def matrix_values(session, variable):
   return vector_values(session, variable)
 
 
+def discover_sessions(discover):
+  import os.path
+  output = requests.post(_to_url('{f}/json'.format(f=discover['function'])), discover['arguments'])
+  data = list(output.json())
+  _log.info('discovered: %s', data)
+
+  def to_desc(d):
+    name = os.path.splitext(os.path.basename(d))[0]
+    return dict(name=name, script="""load('{s}')""".format(s=d))
+
+  return [to_desc(d) for d in data]
+
+
 class OpenCPUColumn(AColumn):
   def __init__(self, desc, table):
     super(OpenCPUColumn, self).__init__(desc['name'], desc['value']['type'])
@@ -373,6 +386,9 @@ class OpenCPUProvider(ADataSetProvider):
   def __init__(self):
     self.c = config
     self._sessions = [OpenCPUSession(desc) for desc in config.sessions]
+
+    if config.discover:
+      self._sessions.extend([OpenCPUSession(desc) for desc in discover_sessions(config.discover)])
 
   def __len__(self):
     return len(self.entries)

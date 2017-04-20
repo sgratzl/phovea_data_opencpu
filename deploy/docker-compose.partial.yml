@@ -6,6 +6,6 @@ services:
     links:
     - db_opencpu:ocpu
   db_opencpu:
-    image: opencpu/ocpu
+    image: opencpu/base
     volumes:
       - './_data:/datasets'
