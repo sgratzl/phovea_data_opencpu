@@ -6,4 +6,6 @@ services:
     links:
     - db_opencpu:ocpu
   db_opencpu:
-    image: opencpu/rstudio
+    image: opencpu/ocpu
+    volumes:
+      - './_data:/datasets'
