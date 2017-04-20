@@ -29,37 +29,37 @@ def create_session(init_script):
 # generate meta data for phovea
 phoveaDatasets = (function(objs) {
   known_type = function(col) {
-    clazz <- class(col)     
+    clazz <- class(col)
     if (clazz == 'numeric' || clazz == 'integer' || clazz == 'double' || clazz == 'matrix') {
       if (typeof(col) == 'integer') {
         list(type='int', range=c(min(col),max(col)))
       } else {
         list(type='real', range=c(min(col),max(col)))
       }
-    } else if (clazz == 'factor') { 
+    } else if (clazz == 'factor') {
       list(type='categorical', categories=levels(col))
     } else {
       list(type='string')
     }
   }
-  columnDescription = function(col, colname) { 
+  columnDescription = function(col, colname) {
     list(name=colname, value=known_type(col))
   }
-  tableDescription = function(dataset, data_name) {    
+  tableDescription = function(dataset, data_name) {
     columns = mapply(columnDescription, dataset, colnames(dataset), SIMPLIFY='array')
-    
+
     list(name=data_name,
          size=dim(dataset),
          type='table',
          columns=columns)
   }
-  vectorDescription = function(dataset, data_name) {    
+  vectorDescription = function(dataset, data_name) {
     list(name=data_name,
          size=length(dataset),
          type='vector',
          value=known_type(dataset))
   }
-  matrixDescription = function(dataset, data_name) {    
+  matrixDescription = function(dataset, data_name) {
     list(name=data_name,
          size=dim(dataset),
          type='matrix',
@@ -134,8 +134,10 @@ def _dim_names(session, variable, expected_length, dim):
       data.append(dim_name + str(i))
   return np.array(data)
 
+
 def row_names(session, variable, expected_length):
   return _dim_names(session, variable, expected_length, 'row')
+
 
 def col_names(session, variable, expected_length):
   return _dim_names(session, variable, expected_length, 'col')
@@ -162,6 +164,7 @@ def vector_values(session, variable):
   output = requests.get(_to_url('tmp/{s}/R/{v}/json'.format(s=session, v=variable)))
   data = list(output.json())
   return np.array(data)
+
 
 def matrix_values(session, variable):
   return vector_values(session, variable)
