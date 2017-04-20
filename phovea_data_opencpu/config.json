@@ -4,7 +4,7 @@
   "sessions": [
     {
       "name": "mtcars",
-      "script": "data(mtcars); cars = mtcars",//"load(file='D:/Documents/test.RData')",
+      "script": "data(mtcars); cars = mtcars; vv = 1:10",//"load(file='D:/Documents/test.RData')",
       "meta": {
         "cars": {
           "idtype": "cars"
