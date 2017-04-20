@@ -22,9 +22,10 @@ Configuration
   ]
 }
 ```
-host / port ... where the OpenCPU cluster lives. 
-script ... the session initialization script. Objects within the sessions are detected during startup and provived to Phovea
-meta ... additional meta data not included in the R objects, e.g., the idtype of individual data structures
+
+ * host / port ... where the OpenCPU cluster lives. 
+ * script ... the session initialization script. Objects within the sessions are detected during startup and are available in Phovea
+ * meta ... additional meta data not included in the R objects, e.g., the idtype of individual data structures
 
 
 Installation
