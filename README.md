@@ -1,6 +1,30 @@
 phovea_data_opencpu [![Phovea][phovea-image]][phovea-url] [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-image]][daviddm-url]
 =====================
 
+A phovea data provider plugin for accessing R objects using [OpenCPU](http://opencpu.org/)
+
+Configuration
+ ------------
+```json
+{
+  "host": "ocpu",
+  "port": 8004,
+  "sessions": [
+    {
+      "name": "survey",
+      "script": "library(MASS); survey = survey",
+      "meta": {
+        "survey": {
+          "idtype": "Student"
+        }
+      }
+    }
+  ]
+}
+```
+host / port ... where the OpenCPU cluster lives. 
+script ... the session initialization script. Objects within the sessions are detected during startup and provived to Phovea
+meta ... additional meta data not included in the R objects, e.g., the idtype of individual data structures
 
 
 Installation
