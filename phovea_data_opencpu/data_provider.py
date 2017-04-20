@@ -26,11 +26,9 @@ def create_session(init_script):
   parse(text="
 %s
 
-print(dd)
-
 # generate meta data for phovea
 phoveaDatasets = (function(objs) {
-  toDescription = function(col, colname) { 
+  columnDescription = function(col, colname) { 
     clazz <- class(col) 
     base <- list(name=colname, value=list(type='string'))
     if (clazz == 'numeric') {
@@ -44,8 +42,8 @@ phoveaDatasets = (function(objs) {
     }
     base
   }
-  phoveaDescription = function(dataset, data_name) {    
-    columns = mapply(toDescription, dataset, colnames(dataset), SIMPLIFY='array')
+  tableDescription = function(dataset, data_name) {    
+    columns = mapply(columnDescription, dataset, colnames(dataset), SIMPLIFY='array')
     
     list(name=data_name,
          size=dim(dataset),
@@ -53,20 +51,19 @@ phoveaDatasets = (function(objs) {
          columns=columns)
   }
   r = list()
-  print(objs)
   for (obj in objs) {
     value = get(obj)
     if (is.data.frame(value)) {
-      r[[obj]] = phoveaDescription(value, obj)
+      r[[obj]] = tableDescription(value, obj)
     }
   }
   r
 })(ls())
 ")
 """ % (init_script,)
-  print(code)
+  _log.debug(code)
   output = requests.post(_to_url('library/base/R/eval'), dict(expr=code))
-  print(output.text)
+  _log.debug(output.text)
   session = re.search('/tmp/(.*)/R', output.text).group(1)
   return session
 
@@ -105,25 +102,24 @@ def resolve_datasets(session):
 
 
 def row_names(session, variable):
+  import numpy as np
   output = requests.post(_to_url('library/base/R/rownames/json'),
                          dict(x='{s}::{v}'.format(s=session, v=variable)))
-  import numpy as np
   data = list(output.json())
   return np.array(data)
 
 
 def column_values(session, variable, column):
+  import numpy as np
   output = requests.post(_to_url('library/base/R/identity/json'),
                          dict(x='{s}::{v}${c}'.format(s=session, v=variable, c=column)))
-  import numpy as np
   data = list(output.json())
   return np.array(data)
 
 
-
-def values(session, variable, columns):
-  output = requests.get(_to_url('tmp/{s}/R/{v}/json'.format(s=session, v=variable)))
+def table_values(session, variable, columns):
   import pandas as pd
+  output = requests.get(_to_url('tmp/{s}/R/{v}/json'.format(s=session, v=variable)))
   data = list(output.json())
   columns = [c.column for c in columns]
   return pd.DataFrame.from_records(data, columns=columns)
@@ -149,11 +145,11 @@ class OpenCPUColumn(AColumn):
 
 
 class OpenCPUTable(ATable):
-  def __init__(self, entry, session):
+  def __init__(self, entry, session, meta):
     ATable.__init__(self, entry['name'], 'opencpu', 'table', entry.get('id', None))
     self._session = session
     self._variable = entry['name']
-    self.idtype = 'Custom'  # entry['idtype']
+    self.idtype = meta.get('idtype', 'Custom')
     self._entry = entry
     self.columns = [OpenCPUColumn(d, self) for d in entry['columns']]
     self.shape = entry['size']
@@ -188,7 +184,7 @@ class OpenCPUTable(ATable):
 
   def aspandas(self, range=None):
     if self._values is None:
-      self._values = values(self._session, self._variable, self.columns)
+      self._values = table_values(self._session, self._variable, self.columns)
     if range is None:
       return self._values
     return self._values.iloc[range.asslice(no_ellipsis=True)]
@@ -199,8 +195,9 @@ class OpenCPUSession(object):
     self._desc = desc
     self._session = create_session(desc['initScript'])
 
-    _entries = resolve_datasets(self._session)
-    self._entries = [OpenCPUTable(entry, self._session) for entry in _entries]
+    entries = resolve_datasets(self._session)
+    meta = desc.get('meta', dict())
+    self._entries = [OpenCPUTable(entry, self._session, meta.get(entry['name'], dict())) for entry in entries]
 
   def __iter__(self):
     return iter(self._entries)
